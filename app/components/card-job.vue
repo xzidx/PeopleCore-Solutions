@@ -1,11 +1,11 @@
 <template>
-  <div class="w-full max-w-base h-[500px] bg-white rounded-[2rem] shadow-sm border border-gray-100 p-8 font-sans flex-row items-center justify-center">
+  <div class="w-full max-w-base h-[500px] bg-white rounded-[2rem] shadow-sm border border-gray-400 p-8 font-sans flex-row items-center justify-center ">
     
     <div class="flex justify-between items-start mb-6">
-      <div class="w-14 h-14 rounded-full border border-gray-200 flex items-center justify-center p-2">
+      <div class="w-14 h-14 rounded-full border border-gray-500 flex items-center justify-center p-2">
         <img :src="logoUrl" class="w-8">
       </div>
-      <button class="px-4 py-2 border border-gray-200 rounded-xl text-sm font-medium text-gray-500">Save</button>
+      <button class="px-4 py-2 border border-gray-500 rounded-xl text-sm font-medium text-gray-500">Save</button>
     </div>
 
     <div class="mb-6">
@@ -13,7 +13,7 @@
         <h2 class="text-lg font-bold text-black">{{ company }}</h2>
         <span class="text-gray-400 text-sm">{{ postedAt }}</span>
       </div>
-      <h1 class="text-3xl font-bold text-gray-900 leading-tight">{{ jobTitle }}</h1>
+      <h1 class="text-2xl font-bold text-gray-900 leading-tight underline">{{ jobTitle }}</h1>
     </div>
 
     <div class="flex gap-2 mb-10">
