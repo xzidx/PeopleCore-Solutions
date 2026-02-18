@@ -12,8 +12,8 @@ const handleLogin = () => {
 </script>
 
 <template>
-    <div class="flex items-top justify-center pt-20 pb-20 mb-20">
-    <div class="bg-white w-110 p-8 shadow-md border rounded-lg">
+    <div class="flex justify-center items-center w-[100%] h-screen">
+    <div class="bg-white w-110 p-8 shadow-md border rounded-lg w-[700px]">
       <h3 class="text-2xl font-bold mb-6 text-center">Login</h3>
 
       <form @submit.prevent="handleLogin" class="space-y-4">
@@ -57,7 +57,7 @@ const handleLogin = () => {
 
       <p class="text-sm text-center mt-4">
         Already have an account?
-        <NuxtLink to="/sign-up" class="text-blue-600">Login</NuxtLink>
+        <NuxtLink to="/sign-up" class="text-blue-600">Make Account</NuxtLink>
       </p>
     </div>
   </div>

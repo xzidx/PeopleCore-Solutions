@@ -12,8 +12,8 @@ const handleLogin = () => {
 </script>
 
 <template>
-  <div class="flex items-top justify-center pt-20 pb-20 mb-20">
-    <div class="bg-white w-110 p-8 shadow-md border rounded-lg">
+    <div class="flex justify-center items-center w-[100%] h-screen">
+    <div class="bg-white w-110 p-8 shadow-md border rounded-lg w-[700px]">
       <h3 class="text-2xl font-bold mb-6 text-center">Create Account</h3>
 
       <form @submit.prevent="handleSignup" class="space-y-4">
