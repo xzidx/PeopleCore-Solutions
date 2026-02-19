@@ -1,12 +1,17 @@
 <template>
-  <div class="bg-white w-[100%] mt-[100px]">
+  <div class="bg-white w-[100%] bg-black mt-[100px]">
     <div class="flex flex-wrap items-center bg-white p-1 rounded-xl border border-gray-200 shadow-sm w-full max-w-[1400px] mx-auto font-sans relative">
       <div class="flex flex-1 items-center gap-2 px-4 min-h-[56px] min-w-[300px]">
         <svg class="w-5 h-5 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
         </svg>
         <div class="flex flex-wrap gap-2">
-          <input type="text" placeholder="Add more..." class="outline-none text-sm text-gray-500 bg-transparent flex-1 min-w-[50px]" />
+          <input 
+            v-model="searchQuery"
+            type="text" 
+            placeholder="Add more..." 
+            class="outline-none text-sm text-gray-500 bg-transparent flex-1 min-w-[50px]" 
+          />
         </div>
         <div class="h-8 w-[1px] bg-gray-200 ml-auto hidden md:block"></div>
       </div>
@@ -34,7 +39,7 @@
       </button>
     </div>
 
-    <div class="bg-white min-h-screen w-[100%] p-8">
+    <div class="bg-white w-[100%] p-8">
       <div class="max-w-8xl mx-auto flex gap-8">
         <aside class="w-64 shrink-0 hidden lg:block">
           <h2 class="text-xl font-bold mb-6">Filters</h2>
@@ -49,150 +54,189 @@
             </div>
           </div>
 
-        <div class="mb-8">
-            <p class="text-gray-400 text-sm font-bold uppercase mb-4 tracking-wider">Employment type</p>
+          <div class="mb-8">
+              <p class="text-gray-400 text-sm font-bold uppercase mb-4 tracking-wider">Employment type</p>
+              <div class="space-y-3">
+                  <label v-for="item in employmentType" :key="item" class="flex items-center gap-3 cursor-pointer group">
+                  <input type="checkbox" class="w-5 h-5 rounded accent-black cursor-pointer border-gray-300">
+                  <span class="text-gray-700 font-medium text-sm group-hover:text-blue-500 transition-colors">{{ item }}</span>
+                  </label>
+              </div>
+          </div>
+
+          <div class="mb-8">
+            <p class="text-gray-400 text-sm font-bold uppercase mb-4 tracking-wider">Seniority Level</p>
             <div class="space-y-3">
-                <label v-for="item in employmentType" :key="item" class="flex items-center gap-3 cursor-pointer group">
+                <label v-for="level in senioritylevel" :key="level" class="flex items-center gap-3 cursor-pointer group">
                 <input type="checkbox" class="w-5 h-5 rounded accent-black cursor-pointer border-gray-300">
-                <span class="text-gray-700 font-medium text-sm group-hover:text-blue-500 transition-colors">{{ item }}</span>
+                <span class="text-gray-700 font-medium text-sm group-hover:text-blue-500 transition-colors">{{ level }}</span>
                 </label>
             </div>
-        </div>
-
-        <div class="mb-8">
-        <p class="text-gray-400 text-sm font-bold uppercase mb-4 tracking-wider">Seniority Level</p>
-        <div class="space-y-3">
-            <label v-for="level in senioritylevel" :key="level" class="flex items-center gap-3 cursor-pointer group">
-            <input type="checkbox" class="w-5 h-5 rounded accent-black cursor-pointer border-gray-300">
-            <span class="text-gray-700 font-medium text-sm group-hover:text-blue-500 transition-colors">{{ level }}</span>
-            </label>
-        </div>
-        </div>
+          </div>
         </aside>
 
         <main class="flex-1">
           <div class="flex justify-between items-center mb-8">
-            <h1 class="text-3xl font-bold">Recommended jobs <span class="bg-white border text-sm px-3 py-1 rounded-full ml-2">386</span></h1>
+            <h1 class="text-3xl font-bold">Recommended jobs <span class="bg-white border text-sm px-3 py-1 rounded-full ml-2">{{ filteredJobs.length }}</span></h1>
             <div class="text-sm text-gray-500 font-medium cursor-pointer">
               Sort by: <span class="text-black font-bold">Last updated <i class="fa-solid fa-sliders ml-1"></i></span>
             </div>
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            <JobCard v-for="(job, index) in jobs" :key="index" v-bind="job" />
+            <JobCard v-for="(job, index) in paginatedJobs" :key="index" v-bind="job" />
           </div>
         </main>
       </div>
     </div>
+
+    <div v-if="totalPages > 0" class="mt-1 flex flex-wrap items-center justify-center gap-6 bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
+        <div class="flex items-center gap-4">
+          <button 
+            @click="currentPage > 1 ? currentPage-- : null"
+            :disabled="currentPage === 1"
+            class="text-sm font-medium text-slate-400 hover:text-slate-900 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+          >
+            Previous
+          </button>
+
+          <div class="flex items-center gap-1">
+            <button 
+              v-for="page in visiblePages" 
+              :key="page"
+              @click="typeof page === 'number' ? currentPage = page : null"
+              :class="[
+                currentPage === page 
+                  ? 'border-blue-500 text-blue-600 ring-1 ring-blue-500' 
+                  : 'border-transparent text-slate-600 hover:bg-slate-50',
+                page === '...' ? 'cursor-default' : 'cursor-pointer border'
+              ]"
+              class="w-9 h-9 rounded-lg flex items-center justify-center font-bold text-sm transition-all"
+            >
+              {{ page }}
+            </button>
+          </div>
+
+          <button 
+            @click="currentPage < totalPages ? currentPage++ : null"
+            :disabled="currentPage === totalPages"
+            class="text-sm font-medium text-blue-600 hover:text-blue-800 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+          >
+            Next
+          </button>
+        </div>
+
+        <div class="flex items-center gap-2 border border-slate-200 rounded-lg px-3 py-1.5 bg-white group hover:border-blue-400 transition-all">
+          <select 
+            v-model="itemsPerPage" 
+            class="text-sm font-medium text-slate-700 bg-transparent outline-none cursor-pointer"
+          >
+            <option :value="3">3 / page</option>
+            <option :value="6">6 / page</option>
+            <option :value="12">12 / page</option>
+          </select>
+        </div>
+      </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed, watch } from 'vue'
 
+// --- UI State ---
 const openDropdown = ref(null)
+const searchQuery = ref('')
+const currentPage = ref(1)
+const itemsPerPage = ref(6)
+
 const selections = ref({
-  location: 'All Countries',
+  location: '',
   jobType: '',
   salary: ''
 })
 
+// --- Interaction Logic ---
+const toggleDropdown = (key) => {
+  openDropdown.value = openDropdown.value === key ? null : key
+}
 
-const scheduleOptions = [
-  'Full time', 'Part time', 'Internship', 'Project work', 'Volunteering'
-]
+const selectOption = (key, value) => {
+  selections.value[key] = value
+  openDropdown.value = null
+}
 
-// NEW: Employment Type options
-const employmentType = [
-  'Full day', 'Flexible schedule', 'Shift work', 'Distant work', 'Shift method'
-]
-
-// NEW: Seniority Level options
-const senioritylevel = [
-  'Student', 'Junior', 'Middle', 'Senior', 'Lead'
-]
+// --- Filter Data ---
+const scheduleOptions = ['Full time', 'Part time', 'Internship', 'Project work', 'Volunteering']
+const employmentType = ['Full day', 'Flexible schedule', 'Shift work', 'Distant work', 'Shift method']
+const senioritylevel = ['Student', 'Junior', 'Middle', 'Senior', 'Lead']
 
 const dropdownConfigs = [
   {
     key: 'location',
     label: 'All Countries',
     icon: '<path d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />',
-    options: ['United States', 'United Kingdom', 'Canada', 'Germany', 'France', 'Australia', 'Japan', 'Singapore', 'Cambodia', 'Remote']
+    options: ['United States', 'United Kingdom', 'Canada', 'Remote']
   },
   {
     key: 'jobType',
     label: 'Job Type',
     icon: '<path d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />',
-    options: ['Full-time', 'Part-time', 'Contract', 'Freelance', 'Internship', 'Temporary', 'Volunteer', 'Commission', 'Hybrid', 'Seasonal']
+    options: ['Full-time', 'Part-time', 'Contract', 'Freelance']
   },
   {
     key: 'salary',
     label: 'Salary Range',
     icon: '<path d="M3 10h18M7 15h1m4 0h1m-7 4h12a2 2 0 002-2V5a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />',
-    options: ['$0 - $1k', '$1k - $5k', '$5k - $10k', '$10k - $20k', '$20k - $40k', '$40k - $60k', '$60k - $80k', '$80k - $100k', '$100k - $150k', '$200k+']
+    options: ['$0 - $1k', '$1k - $5k', '$10k+']
   }
 ]
 
+// --- Job Data ---
 const jobs = ref([
-  {
-    date: '20 May, 2023',
-    company: 'Amazon',
-    companyIcon: 'fa-brands fa-amazon text-orange-500',
-    title: 'Senior UI/UX Designer',
-    tags: ['Part time', 'Senior level', 'Distant', 'Project work'],
-    price: 250,
-    location: 'San Francisco, CA',
-    bgColor: 'bg-[#FFE2C5]'
-  },
-  {
-    date: '4 Feb, 2023',
-    company: 'Google',
-    companyIcon: 'fa-brands fa-google text-blue-500',
-    title: 'Junior UI/UX Designer',
-    tags: ['Full time', 'Junior level', 'Distant', 'Project work'],
-    price: 150,
-    location: 'California, CA',
-    bgColor: 'bg-[#D1F7EA]'
-  },
-  {
-    date: '29 Jan, 2023',
-    company: 'Dribbble',
-    companyIcon: 'fa-brands fa-dribbble text-pink-500',
-    title: 'Senior Motion Designer',
-    tags: ['Part time', 'Senior level', 'Full Day', 'Shift work'],
-    price: 260,
-    location: 'New York, NY',
-    bgColor: 'bg-[#E7DBFF]'
-  },
-  {
-    date: '20 May, 2023',
-    company: 'Amazon',
-    companyIcon: 'fa-brands fa-amazon text-orange-500',
-    title: 'Senior UI/UX Designer',
-    tags: ['Part time', 'Senior level', 'Distant', 'Project work'],
-    price: 250,
-    location: 'San Francisco, CA',
-    bgColor: 'bg-[#FFE2C5]'
-  },
-  {
-    date: '4 Feb, 2023',
-    company: 'Google',
-    companyIcon: 'fa-brands fa-google text-blue-500',
-    title: 'Junior UI/UX Designer',
-    tags: ['Full time', 'Junior level', 'Distant', 'Project work'],
-    price: 150,
-    location: 'California, CA',
-    bgColor: 'bg-[#D1F7EA]'
-  },
-  {
-    date: '29 Jan, 2023',
-    company: 'Dribbble',
-    companyIcon: 'fa-brands fa-dribbble text-pink-500',
-    title: 'Senior Motion Designer',
-    tags: ['Part time', 'Senior level', 'Full Day', 'Shift work'],
-    price: 260,
-    location: 'New York, NY',
-    bgColor: 'bg-[#E7DBFF]'
-  },
+  { date: '12 Mar, 2026', company: 'Spotify', title: 'Product Designer', tags: ['Full time', 'Senior level'], price: 320, location: 'Stockholm, SE', bgColor: 'bg-[#E7DBFF]' },
+  { date: '05 Apr, 2026', company: 'Slack', title: 'Frontend Engineer', tags: ['Distant', 'Middle level'], price: 280, location: 'Remote', bgColor: 'bg-[#D1F7EA]' },
+  { date: '22 Jan, 2026', company: 'Airbnb', title: 'UX Researcher', tags: ['Project work', 'Senior level'], price: 400, location: 'San Francisco, CA', bgColor: 'bg-[#FFE2C5]' },
+  { date: '18 Feb, 2026', company: 'Tesla', title: 'Fullstack Developer', tags: ['Full time', 'Lead level'], price: 450, location: 'Austin, TX', bgColor: 'bg-[#D1F7EA]' },
+  { date: '01 May, 2026', company: 'Netflix', title: 'Content Strategist', tags: ['Part time', 'Junior level'], price: 190, location: 'Los Angeles, CA', bgColor: 'bg-[#E7DBFF]' },
+  { date: '14 Mar, 2026', company: 'Adobe', title: 'Creative Director', tags: ['Full Day', 'Senior level'], price: 550, location: 'San Jose, CA', bgColor: 'bg-[#FFE2C5]' },
+  { date: '30 Apr, 2026', company: 'Figma', title: 'Design Systems Lead', tags: ['Distant', 'Lead level'], price: 420, location: 'Remote', bgColor: 'bg-[#D1F7EA]' },
+  { date: '10 Feb, 2026', company: 'Microsoft', title: 'Azure Specialist', tags: ['Shift work', 'Middle level'], price: 310, location: 'Seattle, WA', bgColor: 'bg-[#FFE2C5]' },
+  { date: '25 Mar, 2026', company: 'Shopify', title: 'E-commerce Expert', tags: ['Contract', 'Senior level'], price: 290, location: 'Ottawa, ON', bgColor: 'bg-[#E7DBFF]' },
+  { date: '08 May, 2026', company: 'Apple', title: 'iOS Developer', tags: ['Full time', 'Senior level'], price: 480, location: 'Cupertino, CA', bgColor: 'bg-[#D1F7EA]' },
+  { date: '19 Jan, 2026', company: 'Notion', title: 'Customer Success', tags: ['Flexible', 'Junior level'], price: 120, location: 'New York, NY', bgColor: 'bg-[#FFE2C5]' },
+  { date: '02 Mar, 2026', company: 'Zoom', title: 'Security Engineer', tags: ['Distant', 'Middle level'], price: 340, location: 'Remote', bgColor: 'bg-[#E7DBFF]' },
+  { date: '15 Feb, 2026', company: 'Discord', title: 'Community Manager', tags: ['Part time', 'Middle level'], price: 210, location: 'Remote', bgColor: 'bg-[#D1F7EA]' },
+  { date: '28 Feb, 2026', company: 'Reddit', title: 'Backend Engineer', tags: ['Full time', 'Senior level'], price: 390, location: 'San Francisco, CA', bgColor: 'bg-[#FFE2C5]' },
+  { date: '10 Apr, 2026', company: 'Stripe', title: 'Payment Architect', tags: ['Full Day', 'Lead level'], price: 510, location: 'Dublin, IE', bgColor: 'bg-[#E7DBFF]' },
+  { date: '05 May, 2026', company: 'HubSpot', title: 'Marketing Lead', tags: ['Flexible', 'Senior level'], price: 275, location: 'Boston, MA', bgColor: 'bg-[#D1F7EA]' },
+  { date: '12 Mar, 2026', company: 'Spotify', title: 'Product Designer', tags: ['Full time', 'Senior level'], price: 320, location: 'Stockholm, SE', bgColor: 'bg-[#E7DBFF]' },
+  { date: '05 Apr, 2026', company: 'Slack', title: 'Frontend Engineer', tags: ['Distant', 'Middle level'], price: 280, location: 'Remote', bgColor: 'bg-[#D1F7EA]' },
+  
 ])
+
+// --- Search & Pagination Logic ---
+const filteredJobs = computed(() => {
+  return jobs.value.filter(job => 
+    job.title.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+    job.company.toLowerCase().includes(searchQuery.value.toLowerCase())
+  )
+})
+
+const totalPages = computed(() => Math.ceil(filteredJobs.value.length / itemsPerPage.value))
+
+const paginatedJobs = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage.value
+  return filteredJobs.value.slice(start, start + itemsPerPage.value)
+})
+
+const visiblePages = computed(() => {
+  const total = totalPages.value
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1)
+  const current = currentPage.value
+  if (current <= 4) return [1, 2, 3, 4, 5, '...', total]
+  if (current >= total - 3) return [1, '...', total - 4, total - 3, total - 2, total - 1, total]
+  return [1, '...', current - 1, current, current + 1, '...', total]
+})
+
+watch([searchQuery, itemsPerPage], () => { currentPage.value = 1 })
 </script>
