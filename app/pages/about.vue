@@ -1,1 +1,0 @@
-<template>My Name is Bora</template>
