@@ -5,7 +5,7 @@
       <header class="mb-12 flex flex-col md:flex-row justify-between items-center gap-6">
         <div class="space-y-2">
           <h1 class="text-4xl font-black text-slate-900 tracking-tight">Browse Companies</h1>
-          </div>
+        </div>
         
         <div class="w-full md:w-96 relative">
           <input 
@@ -22,7 +22,8 @@
         <div 
           v-for="company in paginatedCompanies" 
           :key="company.id"
-          class="group bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm hover:shadow-xl hover:shadow-indigo-900/5 hover:-translate-y-1 transition-all duration-300"
+          @click="goToDetail(company)"
+          class="group bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm hover:shadow-xl hover:shadow-indigo-900/5 hover:-translate-y-1 transition-all duration-300 cursor-pointer"
         >
           <div class="flex justify-between items-start mb-6">
             <div class="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center p-3 border border-slate-100 group-hover:border-indigo-100 transition-colors">
@@ -44,65 +45,31 @@
       </div>
 
       <div v-if="totalPages > 0" class="mt-16 flex flex-wrap items-center justify-center gap-6 bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
-        
         <div class="flex items-center gap-4">
-          <button 
-            @click="currentPage > 1 ? currentPage-- : null"
-            :disabled="currentPage === 1"
-            class="text-sm font-medium text-slate-400 hover:text-slate-900 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-          >
-            Previous
-          </button>
-
+          <button @click="currentPage > 1 ? currentPage-- : null" :disabled="currentPage === 1" class="text-sm font-medium text-slate-400 hover:text-slate-900 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">Previous</button>
           <div class="flex items-center gap-1">
-            <button 
-              v-for="page in visiblePages" 
-              :key="page"
-              @click="typeof page === 'number' ? currentPage = page : null"
-              :class="[
-                currentPage === page 
-                  ? 'border-blue-500 text-blue-600 ring-1 ring-blue-500' 
-                  : 'border-transparent text-slate-600 hover:bg-slate-50',
-                page === '...' ? 'cursor-default' : 'cursor-pointer border'
-              ]"
-              class="w-9 h-9 rounded-lg flex items-center justify-center font-bold text-sm transition-all"
-            >
-              {{ page }}
-            </button>
+            <button v-for="page in visiblePages" :key="page" @click="typeof page === 'number' ? currentPage = page : null" :class="[currentPage === page ? 'border-blue-500 text-blue-600 ring-1 ring-blue-500' : 'border-transparent text-slate-600 hover:bg-slate-50', page === '...' ? 'cursor-default' : 'cursor-pointer border']" class="w-9 h-9 rounded-lg flex items-center justify-center font-bold text-sm transition-all">{{ page }}</button>
           </div>
-
-          <button 
-            @click="currentPage < totalPages ? currentPage++ : null"
-            :disabled="currentPage === totalPages"
-            class="text-sm font-medium text-blue-600 hover:text-blue-800 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-          >
-            Next
-          </button>
+          <button @click="currentPage < totalPages ? currentPage++ : null" :disabled="currentPage === totalPages" class="text-sm font-medium text-blue-600 hover:text-blue-800 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">Next</button>
         </div>
-
         <div class="flex items-center gap-2 border border-slate-200 rounded-lg px-3 py-1.5 bg-white group hover:border-blue-400 transition-all">
-          <select 
-            v-model="itemsPerPage" 
-            class="text-sm font-medium text-slate-700 bg-transparent outline-none cursor-pointer"
-          >
+          <select v-model="itemsPerPage" class="text-sm font-medium text-slate-700 bg-transparent outline-none cursor-pointer">
             <option :value="8">8 / page</option>
-            <option :value="12">12 / page</option>
-            <option :value="24">24 / page</option>
+            <option :value="16">16 / page</option>
           </select>
         </div>
       </div>
-
     </div>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, watch } from 'vue'
+import { useRouter } from 'vue-router'
 
+const router = useRouter()
 const searchQuery = ref('')
 const currentPage = ref(1)
-
-// CHANGED FROM 10 TO 8
 const itemsPerPage = ref(8)
 
 const allCompanies = [
@@ -124,17 +91,20 @@ const allCompanies = [
   { id: 16, name: 'Cortex Design', location: 'Montreal, QC', logo: 'https://img.logoipsum.com/288.svg', description: 'Industrial design firm focused on ergonomic workplace hardware.', openJobs: 8, tags: ['Industrial', 'Design'] },
 ]
 
-const filteredCompanies = computed(() => {
-  return allCompanies.filter(c => c.name.toLowerCase().includes(searchQuery.value.toLowerCase()))
-})
+const goToDetail = (company) => {
+  router.push({
+    name: 'company-detail',
+    params: { id: company.id },
+    state: { company } 
+  })
+}
 
+const filteredCompanies = computed(() => allCompanies.filter(c => c.name.toLowerCase().includes(searchQuery.value.toLowerCase())))
 const totalPages = computed(() => Math.ceil(filteredCompanies.value.length / itemsPerPage.value))
-
 const paginatedCompanies = computed(() => {
   const start = (currentPage.value - 1) * itemsPerPage.value
   return filteredCompanies.value.slice(start, start + itemsPerPage.value)
 })
-
 const visiblePages = computed(() => {
   const total = totalPages.value
   if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1)
@@ -143,6 +113,5 @@ const visiblePages = computed(() => {
   if (current >= total - 3) return [1, '...', total - 4, total - 3, total - 2, total - 1, total]
   return [1, '...', current - 1, current, current + 1, '...', total]
 })
-
 watch([searchQuery, itemsPerPage], () => { currentPage.value = 1 })
 </script>
