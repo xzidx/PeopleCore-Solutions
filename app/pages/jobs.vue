@@ -187,10 +187,7 @@
       </div>
   </div>
 
-  <div class="bg-red-500 flex item-center justify-center">
-      <div class="bg-blue-200">hsfg</div>
-      <div class="bg-white">hahah</div>
-  </div>
+
    
 </template>
   
