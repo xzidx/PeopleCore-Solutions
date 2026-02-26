@@ -33,7 +33,7 @@
                 <img src="https://upload.wikimedia.org/wikipedia/commons/4/44/Marriott_Logo.svg" alt="Marriott" class="w-full h-auto" />
               </div>
               <div>
-                <h1 class="text-2xl font-bold text-slate-800">{{ jobDetail[0]?.title }}</h1>
+                <h1 class="text-2xl font-bold text-slate-800">{{ jobDetail.title }}</h1>
                 <p class="text-slate-500">Los Angeles, CA</p>
                 <div class="flex gap-2 mt-3">
                   <span class="px-3 py-1 bg-indigo-50 text-indigo-600 text-xs font-bold rounded-lg">Logistics</span>
@@ -46,7 +46,7 @@
               <div class="flex gap-8 text-sm">
                 <div class="text-center">
                   <p class="text-slate-400 font-medium">Type</p>
-                  <p class="font-bold">{{ jobDetail[0]?.schedule }} </p>
+                  <p class="font-bold">{{ jobDetail.schedule }} </p>
                 </div>
                 <div class="text-center border-l border-slate-100 pl-8">
                   <p class="text-slate-400 font-medium">Company Size</p>
@@ -64,11 +64,11 @@
           <div class="flex justify-between items-start mb-8">
             <div>
               <h2 class="text-3xl font-bold text-slate-800 mb-2"></h2>
-              <p class="text-slate-500 font-medium">{{ jobDetail[0]?.title }} <span class="mx-2">•</span> {{ jobDetail[0]?.location }}</p>
-              <p class="text-sm mt-2 font-bold uppercase tracking-wider text-slate-400">Salary <span class="text-slate-800 text-lg">{{ jobDetail[0]?.salary  }} $/Month</span></p>
+              <p class="text-slate-500 font-medium">{{ jobDetail.title }} <span class="mx-2">•</span> {{ jobDetail.location }}</p>
+              <p class="text-base mt-2 font-bold  tracking-wider text-slate-400">Salary <span class="text-slate-800 text-base">{{ jobDetail.salary  }} $/Month</span></p>
             </div>
             <div class="text-right">
-              <p class="text-xs text-slate-400 mb-4 font-medium uppercase tracking-widest">Posted: 03 hours(s) ago</p>
+              <p class="text-xs text-slate-400 mb-4 font-medium uppercase tracking-widest">{{ jobDetail.publishedAt }}</p>
               <div class="flex items-center gap-6">
                 <button class="text-slate-500 font-bold underline hover:text-slate-800">Save Job</button>
                 <button class="bg-blue-500 text-white px-10 py-3 rounded-2xl font-bold shadow-lg shadow-blue-200 hover:bg-blue-600 hover:scale-[1.02] transition-all">
@@ -81,26 +81,30 @@
           <div class="space-y-10">
             <div>
               <h3 class="text-lg font-bold text-slate-800 mb-4">Minimum Qualifications</h3>
-              <ul class="list-disc list-inside space-y-2 text-slate-600 leading-relaxed">
-                <li>Bachelor's degree or equivalent practical experience.</li>
-                <li>6 years of experience in an advertising sales, business development, and/or online media environment.</li>
+              <ul class=" list-inside space-y-2 text-slate-600 leading-relaxed">
+                <li>{{ jobDetail.Minimum1}}</li>
+                <li>{{ jobDetail.Minimum2}}</li>
+                <li>{{ jobDetail.Minimum3}}</li>
+               
+               
               </ul>
             </div>
 
             <div>
               <h3 class="text-lg font-bold text-slate-800 mb-4">Preferred Qualifications</h3>
               <div class="space-y-4 text-slate-600 leading-relaxed">
-                <p>Experience working in sales, consulting, media, or advertising.</p>
-                <p>Experience in relationship and stakeholder management.</p>
-                <p>Ability to effectively analyze spreadsheets and create/deliver impactful presentations.</p>
-                <p>Excellent communication and influencing skills, and ability to present advertising solutions to multiple audiences.</p>
+                <p>{{ jobDetail.Preferred1 }}</p>
+                <p>{{ jobDetail.Preferred2 }}</p>
+                <p>{{ jobDetail.Preferred3 }}</p>
+               
+                
               </div>
             </div>
 
             <div>
               <h3 class="text-lg font-bold text-slate-800 mb-4">About The Job</h3>
               <p class="text-slate-600 leading-relaxed">
-                Businesses that partner with Google come in all shapes, sizes and market caps, and no one Google advertising solution works for all. Your knowledge of online media combined with your communication skills and analytical abilities shapes how new and existing business grow.
+                {{ jobDetail.About  }}
               </p>
             </div>
           </div>
@@ -111,25 +115,32 @@
 </template> 
 
 <script setup>
-  import { ref, onMounted } from 'vue'
-  import axios from 'axios'
+import { ref, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
+import axios from 'axios'
 
-  // Create a reactive reference for the jobs
-  const jobDetail = ref([])
+const route = useRoute()
+const jobDetail = ref(null)
 
-  const key = {
-    headers: {
-      Authorization: 'Bearer e10ef327e881d9bd1ed50870ef36e6228d94fb67c5db82824c1e6aea1d3462c9b1a82a539e637dae712a632fa0d035747d726bebc9ebbd73fa1d1539b44c4b02ca143978bd2a852e0241f9e799e82b6b9e614cd09277766e0aa670bfbdc1ab20b02b471655c5798976816eeb27aea59899f236807db38adc1ae0d85edeaa1cce'
+onMounted(async () => {
+  try {
+    const jobId = route.query.id
+    console.log('Job ID:', jobId)
+    
+    // Get all jobs
+    const response = await axios.get('http://localhost:1337/api/jobs')
+    const jobs = response.data.data
+    
+    // Find the job with matching ID
+    const foundJob = jobs.find(job => job.id === parseInt(jobId))
+    
+    if (foundJob) {
+      jobDetail.value = foundJob
+      console.log('Job found:', foundJob)
     }
+    
+  } catch (error) {
+    console.error('Error:', error)
   }
-
-  onMounted(async () => {
-    try {
-      const response = await axios.get("http://localhost:1337/api/jobs", key)
-      // Strapi data is usually in response.data.data
-      jobDetail.value = response.data.data
-    } catch (error) {
-      console.error("Error fetching jobs:", error)
-    }
-  })
+})
 </script>
